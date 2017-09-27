@@ -27,7 +27,7 @@ public:
 
     Future(Future const &) = delete;
     //Future &operator= (Future const &) = delete;
-
+    Future();
 
     T get() const;
 
@@ -36,11 +36,17 @@ public:
     void wait() const;
 
 };
+template <typename T>
+Future<T>::Future() {
 
+}
 template<typename T>
 T Future<T>::get() const {
-    if (state_ptr->was_error) {
-        throw state_ptr->error;
+    if (!state_ptr->promise_exists) {
+        throw std::runtime_error("promise doesnt exists");
+    }
+    if (!state_ptr->is_Ready) {
+        throw std::runtime_error("promise doesnt have value");
     }
     wait();
     return state_ptr->value;
@@ -53,13 +59,10 @@ bool Future<T>::isReady() const {
 
 template<typename T>
 void Future<T>::wait() const {
-    std::unique_lock<std::mutex> lock(state_ptr->mutex);
     if (state_ptr->is_Ready) {
         return;
     }
-    if (!state_ptr->promise_exists) {
-        throw std::runtime_error("promise doesnt exists");
-    }
+    std::unique_lock<std::mutex> lock(state_ptr->mutex);
     state_ptr->condiional_variable.wait(lock);
 }
 

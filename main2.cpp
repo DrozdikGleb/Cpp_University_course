@@ -10,7 +10,6 @@
 
 
 void f1() {
-   // promise.set(10);
     //check double set value
     Promise<int> promise;
     try {
@@ -29,12 +28,24 @@ void f1() {
     try {
         future2.get();
     }
-    catch (...) {
-        std::cout << "was error\n";
+    catch (std::exception const &exception2) {
+        std::cout <<exception2.what()<<'\n' ;
+    }
+ //check execution get method without promise
+    Future <int> future3;
+    try {
+        future3.get();
+    }catch(std::exception const &exception1){
+        std::cout<<exception1.what()<<'\n';
     }
 
-   /* Future <int> future2;
-    future2.get();*/
+    Future <int> future4;
+    Promise <int>promise4;
+    promise4.set(10);
+
+    promise4.getFuture()
+
+
 
 
 }
