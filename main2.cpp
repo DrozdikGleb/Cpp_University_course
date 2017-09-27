@@ -5,29 +5,40 @@
 #include <c++/thread>
 #include "future_and_promise/Future.h"
 #include "future_and_promise/Promise.h"
-#include "future_and_promise/Shared_State.h"
 
 
-Promise<int> promise;
+
 
 void f1() {
    // promise.set(10);
-    std::exception_ptr e;
-    promise.setException(e);
-    Future<int> future = promise.getFuture();
+    //check double set value
+    Promise<int> promise;
     try {
-        future.get();
-
-    }catch (...){
-        std::cout<<"smth wrong";
+        promise.set(10);
+        promise.set(10);
+    }
+    catch (std::exception const &exception){
+        std::cout<<exception.what()<<'\n';
     }
 
+    //check set exception method
+    Promise<int> promise2;
+    std::exception_ptr e;
+    promise2.setException(e);
+    Future<int> future2 = promise2.getFuture();
+    try {
+        future2.get();
+    }
+    catch (...) {
+        std::cout << "was error\n";
+    }
+
+   /* Future <int> future2;
+    future2.get();*/
+
 
 }
 
-void f2() {
-   // std::cout << promise.getFuture().get();
-}
 
 int main() {
     std::thread thread1(f1);
