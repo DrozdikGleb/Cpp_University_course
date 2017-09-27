@@ -12,16 +12,16 @@
 
 template<typename T>
 class Promise {
-
+private:
     Shared_State<T> *state_ptr;
 
 public:
     Promise(Promise &&) = default;
-    // Promise &operator= (Promise &&) = default;
+    Promise &operator= (Promise &&) = default;
 
     Promise(Promise &) = delete;
+    Promise &operator= (Promise &) = delete;
 
-    //Promise &operator= (Promise &) = delete;
     Promise();
 
     ~Promise();
@@ -45,23 +45,20 @@ Future<T> Promise<T>::getFuture() {
 template<typename T>
 Promise<T>::Promise() {
     state_ptr = new Shared_State<T>();
-    state_ptr->promise_exists = true;
 }
 
 template<typename T>
 Promise<T>::~Promise() {
-    state_ptr->promise_exists = false;
-    state_ptr->was_error = false;
 }
 
 template<typename T>
 void Promise<T>::set(const T &value) {
     std::unique_lock<std::mutex> lock(state_ptr->mutex);
-    if (state_ptr->is_Ready) {
+    if (state_ptr->has_Value) {
         throw std::runtime_error("value already set");
     }
     state_ptr->value = value;
-    state_ptr->is_Ready = true;
+    state_ptr->has_Value = true;
     state_ptr->condiional_variable.notify_one();
 }
 
@@ -74,7 +71,6 @@ template<typename T>
 void Promise<T>::setException(const std::exception_ptr &e) {
     std::unique_lock<std::mutex> lock(state_ptr->mutex);
     state_ptr->error = e;
-    state_ptr->was_error = true;
 }
 
 

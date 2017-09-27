@@ -15,11 +15,10 @@ struct Shared_State {
     std::condition_variable condiional_variable;
     std::exception_ptr error;
     T value;
-    std::atomic_bool is_Ready, promise_exists, was_error;
+    std::atomic_bool has_Value;
 
     Shared_State() {
-        is_Ready = false;
-        promise_exists = false;
+        has_Value = false;
     }
 };
 

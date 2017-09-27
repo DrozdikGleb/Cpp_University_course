@@ -7,8 +7,6 @@
 #include "future_and_promise/Promise.h"
 
 
-
-
 void f1() {
     //check double set value
     Promise<int> promise;
@@ -16,46 +14,42 @@ void f1() {
         promise.set(10);
         promise.set(10);
     }
-    catch (std::exception const &exception){
-        std::cout<<exception.what()<<'\n';
+    catch (std::exception const &exception) {
+        std::cout << exception.what() << '\n';
     }
 
     //check set exception method
     Promise<int> promise2;
-    std::exception_ptr e;
-    promise2.setException(e);
     Future<int> future2 = promise2.getFuture();
+    try {
+        std::string("abc").substr(10);
+    } catch (...) {
+        promise2.setException(std::current_exception());
+    }
     try {
         future2.get();
     }
     catch (std::exception const &exception2) {
-        std::cout <<exception2.what()<<'\n' ;
+        std::cout << exception2.what() << '\n';
     }
- //check execution get method without promise
-    Future <int> future3;
+    //check execution get method without promise
     try {
+        Future<int> future3;
         future3.get();
-    }catch(std::exception const &exception1){
-        std::cout<<exception1.what()<<'\n';
+    } catch (std::exception const &exception2) {
+        std::cout << exception2.what() << '\n';
     }
 
-    Future <int> future4;
-    Promise <int>promise4;
+    //simple example of promise and future
+    Promise<int> promise4;
     promise4.set(10);
-
-    promise4.getFuture()
-
-
+    std::cout << promise4.getFuture().get();
 
 
 }
 
-
 int main() {
     std::thread thread1(f1);
-    //std::thread thread2(f2);
     thread1.join();
-   // thread2.join();
-
     return 0;
 }

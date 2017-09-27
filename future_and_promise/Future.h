@@ -13,9 +13,10 @@ class Promise;
 template<typename T>
 class Future {
 
+private:
     friend class Promise<T>;
 
-    Shared_State<T> *state_ptr;
+    Shared_State<T> *state_ptr = 0;
 
     explicit Future(Shared_State<T> *ptr) {
         state_ptr = ptr;
@@ -23,10 +24,10 @@ class Future {
 
 public:
     Future(Future &&) = default;
-    //Future& operator=(Future &&) = default;
+    Future& operator=(Future &&) = default;
 
     Future(Future const &) = delete;
-    //Future &operator= (Future const &) = delete;
+    Future &operator= (Future const &) = delete;
     Future();
 
     T get() const;
@@ -42,11 +43,11 @@ Future<T>::Future() {
 }
 template<typename T>
 T Future<T>::get() const {
-    if (!state_ptr->promise_exists) {
-        throw std::runtime_error("promise doesnt exists");
+    if(state_ptr == 0){
+        throw std::runtime_error("value is not set and promise doesn't exist");
     }
-    if (!state_ptr->is_Ready) {
-        throw std::runtime_error("promise doesnt have value");
+    if(state_ptr->error){
+        std::rethrow_exception(state_ptr->error);
     }
     wait();
     return state_ptr->value;
@@ -54,16 +55,18 @@ T Future<T>::get() const {
 
 template<typename T>
 bool Future<T>::isReady() const {
-    return state_ptr->is_Ready;
+    return state_ptr->has_Value;
 }
 
 template<typename T>
 void Future<T>::wait() const {
-    if (state_ptr->is_Ready) {
+    if (state_ptr->has_Value) {
         return;
     }
     std::unique_lock<std::mutex> lock(state_ptr->mutex);
-    state_ptr->condiional_variable.wait(lock);
+    while(!state_ptr->has_Value) {
+        state_ptr->condiional_variable.wait(lock);
+    }
 }
 
 
