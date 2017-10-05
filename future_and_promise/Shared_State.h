@@ -19,7 +19,7 @@ public:
     std::exception_ptr error;
     std::mutex mutex;
     std::condition_variable condiional_variable;
-    std::atomic_bool has_Value;
+    std::atomic_bool has_Value,has_promise;
 };
 
 template<typename T>

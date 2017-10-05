@@ -10,6 +10,7 @@
 #include "Shared_State.h"
 #include "Future.h"
 
+
 template<typename T>
 class Promise {
 private:
@@ -18,10 +19,12 @@ private:
 public:
 
     Promise(Promise &&promise) noexcept : state_ptr(std::move(promise.state_ptr)) {
+        state_ptr->has_promise = true;
     };
 
-    Promise &operator=(Promise &&promise)noexcept {
+    Promise &operator=(Promise &&promise) noexcept {
         state_ptr = std::move(promise.state_ptr);
+        state_ptr->has_promise = true;
         return *this;
     };
 
@@ -30,24 +33,31 @@ public:
     Promise &operator=(Promise const &) = delete;
 
     Promise() : state_ptr(std::make_shared<Shared_State<T>>()) {
-    };//make_shared - создаёт объект заданного типа и возвращает shared_ptr на него
+        state_ptr->has_promise=true;
+    };
 
     Future<T> getFuture() {
-        std::unique_lock<std::mutex> lock(state_ptr->mutex);
         return Future<T>(state_ptr);
     };
 
+    ~Promise() {
+        if(state_ptr) {
+            state_ptr->has_promise = false;
+            state_ptr->condiional_variable.notify_one();
+        }
+    }
+
     void set(const T &value) {
         std::unique_lock<std::mutex> lock(state_ptr->mutex);
+        state_ptr->value = value;
         if (state_ptr->has_Value) {
             throw std::runtime_error("value already set");
         }
-        state_ptr->value = value;
         state_ptr->has_Value = true;
         state_ptr->condiional_variable.notify_one();
     };
 
-    void set(const T &&value) {
+    void set(T &&value) {
         std::unique_lock<std::mutex> lock(state_ptr->mutex);
         if (state_ptr->has_Value) {
             throw std::runtime_error("value already set");
@@ -135,6 +145,10 @@ public:
     Promise() : state_ptr(std::make_shared<Shared_State<void>>()) {
     };
 
+    ~Promise() {
+        state_ptr->has_promise = false;
+    }
+
     Future<void> getFuture() {
         std::unique_lock<std::mutex> lock(state_ptr->mutex);
         return Future<void>(state_ptr);
@@ -155,6 +169,7 @@ public:
     };
 
 };
+
 
 
 

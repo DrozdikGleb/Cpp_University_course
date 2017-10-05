@@ -21,10 +21,12 @@ private:
 
 public:
     Future(Future<T> &&future)noexcept : state_ptr(std::move(future.state_ptr)) {
+        state_ptr->has_promise = true;
     };
 
     Future &operator=(Future<T> &&future) noexcept {
         state_ptr = std::move(future.state_ptr);
+        state_ptr->has_promise = true;
         return *this;
     };
 
@@ -34,10 +36,10 @@ public:
 
 
     T get() const {
-        if (state_ptr == nullptr) {
+        wait();
+        if (!state_ptr->has_promise && !isReady()) {
             throw std::runtime_error("value is not set and promise doesn't exist");
         }
-        wait();
         if (state_ptr->error) {
             std::rethrow_exception(state_ptr->error);
         }
@@ -53,7 +55,7 @@ public:
             return;
         }
         std::unique_lock<std::mutex> lock(state_ptr->mutex);
-        while (!state_ptr->has_Value) {
+        while (!state_ptr->has_Value && state_ptr->has_promise) {
             state_ptr->condiional_variable.wait(lock);
         }
     };
@@ -66,9 +68,9 @@ class Future<T &> {
 private:
     friend class Promise<T &>;
 
-    std::shared_ptr<Shared_State<T&>> state_ptr = nullptr;
+    std::shared_ptr<Shared_State<T &>> state_ptr = nullptr;
 
-    explicit Future(std::shared_ptr<Shared_State<T&>> ptr) {
+    explicit Future(std::shared_ptr<Shared_State<T &>> ptr) {
         state_ptr = ptr;
     }
 
@@ -87,7 +89,7 @@ public:
     Future &operator=(Future const &) = delete;
 
     T &get() const {
-        if (state_ptr == 0) {
+        if (state_ptr == nullptr) {
             throw std::runtime_error("value is not set and promise doesn't exist");
         }
         if (state_ptr->error) {
@@ -130,7 +132,7 @@ public:
         state_ptr = std::move(future.state_ptr);
     };
 
-    Future& operator=(Future &&future) noexcept {
+    Future &operator=(Future &&future) noexcept {
         state_ptr = std::move(future.state_ptr);
         return *this;
     }
