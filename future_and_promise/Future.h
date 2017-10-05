@@ -107,6 +107,7 @@ public:
         if (state_ptr->has_Value) {
             return;
         }
+        //
         std::unique_lock<std::mutex> lock(state_ptr->mutex);
         while (!state_ptr->has_Value) {
             state_ptr->condiional_variable.wait(lock);

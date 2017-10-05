@@ -76,7 +76,7 @@ public:
         state_ptr->has_Value = true;
         state_ptr->condiional_variable.notify_one();
     };
-
+//
 };
 
 template<typename T>
